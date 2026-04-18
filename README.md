@@ -43,23 +43,33 @@ state.py  — in-memory shift state (resets on new CSV upload)
 ## Commands
 
 ### Supervisor
+
+**Shift start**
 | Command | What it does |
 |---|---|
-| Upload `.csv` file | Loads the shift schedule — do this first at each shift start |
-| `/entry_qr` | Generates the entrance check-in QR code to post at the door |
-| `/announce [text]` | Adds an announcement included in all subsequent briefings |
-| `/clear_announcements` | Removes all current announcements |
-| `/status` | Health check — schedule, operator count, sick reallocations, gaps, announcements |
+| Upload `.csv` file | Loads the shift schedule — do this first |
+| `/entry_qr` | Generates the entrance QR code to post at the door |
+| `/announce [text]` | Adds an announcement to all subsequent briefings |
+| `/remove_announcement [number]` | Removes a specific announcement by number |
+
+**During shift**
+| Command | What it does |
+|---|---|
+| `/dashboard` | Live shift overview — auto-refreshes every 30s |
 | `/sick [name]` | Marks operator absent, finds compatible replacement, notifies them |
-| `/umi_start [name]` | Operator starts U*I break; finds temporary cover for their station |
+| `/umi_start [name]` | Operator starts U*I break; finds temporary cover |
 | `/umi_end [name]` | Operator returns; releases cover back to standby |
-| `/swap [name1] [name2]` | Requests a station swap (requires supervisor approval) |
+| `/swap [name1] [name2]` | Requests a station swap |
 | `/approve_swap [id]` | Approves a pending swap |
-| `/cancel_swap [id]` | Cancels a pending swap |
+
+**Safety**
+| Command | What it does |
+|---|---|
 | `/update [rules text]` | Issues a safety rules update and generates acknowledgment QR code |
 | `/ack_status` | Shows who has and hasn't acknowledged the latest rules update |
 
-### Operators
+### Operator
+
 | Action | What it does |
 |---|---|
 | Scan entrance QR code | Check in and instantly receive your personalised shift briefing |
