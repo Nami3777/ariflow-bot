@@ -2,7 +2,7 @@
 
 A Telegram bot that manages robotics factory shift operations: operator check-in with personalised briefings, sick-leave reallocation, safety rules acknowledgment, U*I break coordination, and ad-hoc announcements.
 
-Built as a portfolio project demonstrating agent-based workflow automation and GRC skills, modeled on operational patterns in a physical AI / robotics environment (one of the leading robotics companies in Europe).
+Built as a portfolio project demonstrating agent-based workflow automation and GRC skills — specifically role-based access control, capability-gated reallocation, change approval workflows, safety acknowledgment tracking, and a full audit trail — modeled on operational patterns in a physical AI / robotics environment (one of the leading robotics companies in Europe).
 
 ---
 
@@ -57,8 +57,8 @@ state.py  — in-memory shift state (resets on new CSV upload)
 |---|---|
 | `/dashboard` | Live shift overview — auto-refreshes every 30s |
 | `/sick [name]` | Marks operator absent, finds compatible replacement, notifies them |
-| `/umi_start [name]` | Operator starts U*I break; finds temporary cover |
-| `/umi_end [name]` | Operator returns; releases cover back to standby |
+| `/u*i_start [name]` | Operator starts U*I break; finds temporary cover |
+| `/u*i_end [name]` | Operator returns; releases cover back to standby |
 | `/swap [name1] [name2]` | Requests a station swap |
 | `/approve_swap [id]` | Approves a pending swap |
 
