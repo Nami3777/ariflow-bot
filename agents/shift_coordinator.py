@@ -33,9 +33,9 @@ def _audit(message: str):
         f.write(f"[{ts}] {message}\n")
 
 
-async def handle_umi_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_trn_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /umi_start [operator_name]")
+        await update.message.reply_text("Usage: /trn_start [operator_name]")
         return
 
     name = " ".join(context.args).strip()
@@ -44,7 +44,7 @@ async def handle_umi_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     op = state.operators[name]
-    op.status = "umi"
+    op.status = "trn"
     station = op.station
     station_type = op.station_type
 
@@ -60,27 +60,27 @@ async def handle_umi_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if cover:
         state.operators[cover].status = "active"
-        state.umi_covers[name] = cover
-        _audit(f"U*I_START: {name} on U*I. {cover} covering {station} ({station_type}).")
+        state.trn_covers[name] = cover
+        _audit(f"TRN_START: {name} on training slot. {cover} covering {station} ({station_type}).")
         chat_id = operator_ids.get(cover)
         if chat_id:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"Please cover station {station} ({station_type}) while {name} is on U*I break."
+                text=f"Please cover station {station} ({station_type}) while {name} is on training slot."
             )
         await update.message.reply_text(
-            f"{name} started U*I. {cover} covering station {station}."
+            f"{name} started training slot. {cover} covering station {station}."
         )
     else:
-        _audit(f"U*I_START: {name} on U*I. No cover found for {station} ({station_type}). GAP.")
+        _audit(f"TRN_START: {name} on training slot. No cover found for {station} ({station_type}). GAP.")
         await update.message.reply_text(
-            f"COVERAGE GAP: {name} on U*I, no compatible cover for {station} ({station_type})."
+            f"COVERAGE GAP: {name} on training slot, no compatible cover for {station} ({station_type})."
         )
 
 
-async def handle_umi_end(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_trn_end(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Usage: /umi_end [operator_name]")
+        await update.message.reply_text("Usage: /trn_end [operator_name]")
         return
 
     name = " ".join(context.args).strip()
@@ -91,14 +91,14 @@ async def handle_umi_end(update: Update, context: ContextTypes.DEFAULT_TYPE):
     op = state.operators[name]
     op.status = "active"
 
-    cover = state.umi_covers.pop(name, None)
+    cover = state.trn_covers.pop(name, None)
     if cover and cover in state.operators:
         state.operators[cover].status = "unassigned"
-        _audit(f"U*I_END: {name} returned to station {op.station}. {cover} released to standby.")
+        _audit(f"TRN_END: {name} returned to station {op.station}. {cover} released to standby.")
     else:
-        _audit(f"U*I_END: {name} returned to station {op.station}.")
+        _audit(f"TRN_END: {name} returned to station {op.station}.")
 
-    await update.message.reply_text(f"{name} returned from U*I. Back on station {op.station}.")
+    await update.message.reply_text(f"{name} returned from training slot. Back on station {op.station}.")
 
 
 def _split_two_operators(args: list[str]) -> tuple[str, str] | None:

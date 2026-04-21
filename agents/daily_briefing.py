@@ -82,11 +82,11 @@ def build_briefing(name: str, op: Operator) -> str:
         target_part = f"   Target: {target}" if target else ""
         task_lines.append(f"  {t_start}–{t_end}   {sop_num}{target_part}")
 
-    if op.umi_start and op.umi_end:
-        umi_sop_str = f"   SOP#{op.umi_sop.zfill(5)}" if op.umi_sop else ""
-        umi_line = f"⏱ U*I: {op.umi_start}–{op.umi_end}{umi_sop_str}"
+    if op.trn_start and op.trn_end:
+        trn_sop_str = f"   SOP#{op.trn_sop.zfill(5)}" if op.trn_sop else ""
+        trn_line = f"⏱ Training Slot: {op.trn_start}–{op.trn_end}{trn_sop_str}"
     else:
-        umi_line = ""
+        trn_line = ""
 
     announcement_block = ""
     if state.announcements:
@@ -102,8 +102,8 @@ def build_briefing(name: str, op: Operator) -> str:
         f"📋 Tasks today (2h each):\n"
         + "\n".join(task_lines)
     )
-    if umi_line:
-        body += f"\n\n{umi_line}"
+    if trn_line:
+        body += f"\n\n{trn_line}"
     body += announcement_block
     return body
 
@@ -138,10 +138,10 @@ async def handle_checkin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if op.status == "unassigned":
-        umi_info = ""
-        if op.umi_start and op.umi_end:
-            umi_sop_str = f"   SOP#{op.umi_sop.zfill(5)}" if op.umi_sop else ""
-            umi_info = f"\n⏱ U*I: {op.umi_start}–{op.umi_end}{umi_sop_str}"
+        trn_info = ""
+        if op.trn_start and op.trn_end:
+            trn_sop_str = f"   SOP#{op.trn_sop.zfill(5)}" if op.trn_sop else ""
+            trn_info = f"\n⏱ Training Slot: {op.trn_start}–{op.trn_end}{trn_sop_str}"
         announcements = ""
         if state.announcements:
             items = "\n".join(f"  • {a}" for a in state.announcements)
@@ -151,7 +151,7 @@ async def handle_checkin(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"You are unassigned for today.\n"
             f"We will allocate you to an empty station promptly.\n"
             f"⏰ Shift: {op.shift_start}–{op.shift_end}"
-            + umi_info
+            + trn_info
             + announcements
         )
         return
@@ -234,24 +234,24 @@ async def handle_preview(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if op.status == "sick":
         msg = f"[Preview for {name}]\n\nStatus: SICK — marked absent this shift."
-    elif op.status == "umi":
-        cover = state.umi_covers.get(name, "unknown")
+    elif op.status == "trn":
+        cover = state.trn_covers.get(name, "unknown")
         msg = (
             f"[Preview for {name}]\n\n"
-            f"Status: ON U*I BREAK\n"
+            f"Status: ON TRAINING SLOT\n"
             f"Station {op.station} covered by {cover}."
         )
     elif op.status == "unassigned":
-        umi_info = ""
-        if op.umi_start and op.umi_end:
-            umi_sop_str = f"   SOP#{op.umi_sop.zfill(5)}" if op.umi_sop else ""
-            umi_info = f"\n⏱ U*I: {op.umi_start}–{op.umi_end}{umi_sop_str}"
+        trn_info = ""
+        if op.trn_start and op.trn_end:
+            trn_sop_str = f"   SOP#{op.trn_sop.zfill(5)}" if op.trn_sop else ""
+            trn_info = f"\n⏱ Training Slot: {op.trn_start}–{op.trn_end}{trn_sop_str}"
         msg = (
             f"[Preview for {name}]\n\n"
             f"✅ Checked in, {name}.\n\n"
             f"You are unassigned for today.\n"
             f"We will allocate you to an empty station promptly.\n"
-            f"⏰ Shift: {op.shift_start}–{op.shift_end}" + umi_info
+            f"⏰ Shift: {op.shift_start}–{op.shift_end}" + trn_info
         )
     else:
         msg = f"[Preview for {name}]\n\n" + build_briefing(name, op)
@@ -271,15 +271,15 @@ async def handle_briefing(update: Update, context: ContextTypes.DEFAULT_TYPE):
             no_id.append(name)
             continue
         if op.status == "unassigned":
-            umi_info = ""
-            if op.umi_start and op.umi_end:
-                umi_sop_str = f"   SOP#{op.umi_sop.zfill(5)}" if op.umi_sop else ""
-                umi_info = f"\n⏱ U*I: {op.umi_start}–{op.umi_end}{umi_sop_str}"
+            trn_info = ""
+            if op.trn_start and op.trn_end:
+                trn_sop_str = f"   SOP#{op.trn_sop.zfill(5)}" if op.trn_sop else ""
+                trn_info = f"\n⏱ Training Slot: {op.trn_start}–{op.trn_end}{trn_sop_str}"
             msg = (
                 f"✅ Shift briefing, {name}.\n\n"
                 f"You are unassigned for today.\n"
                 f"We will allocate you to an empty station promptly.\n"
-                f"⏰ Shift: {op.shift_start}–{op.shift_end}" + umi_info
+                f"⏰ Shift: {op.shift_start}–{op.shift_end}" + trn_info
             )
         else:
             msg = build_briefing(name, op)

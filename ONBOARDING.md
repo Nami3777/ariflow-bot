@@ -13,7 +13,7 @@
 | Supervisor manually sends shift briefings to each operator | Each operator scans one QR code → receives personalised briefing instantly |
 | Sick-leave replacement found by memory or whiteboard | Bot matches capability matrix → notifies replacement automatically |
 | Safety rule updates sent ad-hoc via group chat | Formal QR acknowledgment — supervisor sees who has and hasn't confirmed |
-| UMI cover managed verbally | Bot tracks cover requests, approvals, and returns in real time |
+| Training slot cover managed verbally | Bot tracks cover requests, approvals, and returns in real time |
 | No audit trail | Every event timestamped in `logs/audit.log` |
 
 ---
@@ -54,9 +54,9 @@ Each operator must send `/start` to `@ariflow_bot` once. Collect their chat IDs 
 
 ```json
 {
-  "Namyun":  0,
-  "Ha**sh":  0,
-  "Ra**el":  0
+  "Namyun":   0,
+  "Hamish":   0,
+  "Rafael":   0
 }
 ```
 
@@ -68,24 +68,24 @@ Edit `data/capabilities.json` to reflect each operator's qualified station types
 
 ```json
 {
-  "Namyun":  ["S-T**r", "S-F*"],
-  "Ha**sh":  ["D-F*", "S-R*", "S-T**r"],
-  "Ra**el":  ["S-F*", "S-Y*5"]
+  "Namyun":  ["S-Beta", "S-Alpha"],
+  "Hamish":  ["D-Alpha", "S-Gamma", "S-Beta"],
+  "Rafael":  ["S-Beta"]
 }
 ```
 
-Update this file whenever an operator completes new station training. The sick-leave and UMI agents use this to find valid replacements — an outdated matrix leads to incorrect assignments.
+Update this file whenever an operator completes new station training. The sick-leave and training slot agents use this to find valid replacements — an outdated matrix leads to incorrect assignments.
 
 **Station type codes:**
 
 | Code | Robot |
 |---|---|
-| `S-F*` | Single-arm F* |
-| `S-T**r` | Single-arm T**r |
-| `D-T**r` | Dual-arm T**r |
-| `D-F*` | Dual-arm F* |
-| `S-R*` | Single-arm R* |
-| `S-Y*5` | Single-arm Y*5 |
+| `S-Alpha` | Single-arm Alpha |
+| `S-Beta` | Single-arm Beta |
+| `D-Beta` | Dual-arm Beta |
+| `D-Alpha` | Dual-arm Alpha |
+| `S-Gamma` | Single-arm Gamma |
+| `S-Delta` | Single-arm Delta |
 
 ---
 
@@ -93,7 +93,7 @@ Update this file whenever an operator completes new station training. The sick-l
 
 ### 2.1 Prepare the schedule CSV
 
-The shift schedule CSV is the single source of truth. It must be uploaded at the start of every shift. A new upload resets all in-memory state (check-ins, announcements, UMI status).
+The shift schedule CSV is the single source of truth. It must be uploaded at the start of every shift. A new upload resets all in-memory state (check-ins, announcements, training slot status).
 
 **Required columns:**
 
@@ -102,12 +102,12 @@ The shift schedule CSV is the single source of truth. It must be uploaded at the
 | `shift_date` | `2026-04-12` |
 | `operator_name` | `Namyun` (must match `operators.json`) |
 | `station` | `A-7` |
-| `station_type` | `S-T**r` |
+| `station_type` | `S-Beta` |
 | `shift_start` | `14:30` |
 | `shift_end` | `23:00` |
-| `umi_start` | `17:30` |
-| `umi_end` | `18:30` |
-| `umi_sop` | `6` (plain integer from UMI Shift Plan) |
+| `trn_start` | `17:30` |
+| `trn_end` | `18:30` |
+| `trn_sop` | `6` (plain integer from the Training Slot Shift Plan) |
 | `sop1` – `sop4` | `SOP#00033(90)` |
 | `status` | `active` or `unassigned` |
 
@@ -128,7 +128,7 @@ Operators on standby: set `status = unassigned`, leave station and SOP columns e
 ```
 ✅ Checked in — Good afternoon, Namyun!
 
-📍 Station A-7 — S-T**r
+📍 Station A-7 — S-Beta
 ⏰ Shift: 14:30 – 23:00
 
 📋 Tasks today (2h each):
@@ -137,7 +137,7 @@ Operators on standby: set `status = unassigned`, leave station and SOP columns e
   18:30–20:30   SOP#00001   Target: 110
   20:30–22:30   SOP#00020   Target: 80
 
-⏱ UMI: 17:30–18:30   SOP#00006
+⏱ Training Slot: 17:30–18:30   SOP#00006
 
 📢 Announcements:
   • Demo at 3:00 PM — visitors on floor, maintain station cleanliness
@@ -167,28 +167,28 @@ What happens:
 1. Namyun marked absent
 2. Bot scans standby pool for an operator qualified for Namyun's station type
 3. First match is reassigned and notified via Telegram DM
-4. Event logged: `SICK: Namyun absent. Ha**sh reallocated to A-7 (S-T**r).`
+4. Event logged: `SICK: Namyun absent. Hamish reallocated to A-7 (S-Beta).`
 
 If no qualified standby operator is available, the bot alerts the supervisor immediately with station type and gap details.
 
-### 3.3 UMI breaks
+### 3.3 Training slot breaks
 
-**Operator starts UMI:**
+**Operator starts training slot:**
 ```
-/umi_start Namyun
+/trn_start Namyun
 ```
 Bot finds a standby operator qualified for A-7 and sends them a cover request.
 
 **Operator returns:**
 ```
-/umi_end Namyun
+/trn_end Namyun
 ```
 Cover operator released back to standby.
 
 ### 3.4 Station swaps
 
 ```
-/swap Namyun Ha**sh
+/swap Namyun Hamish
 ```
 
 Submits a swap request. Supervisor reviews and approves:
@@ -215,7 +215,7 @@ Announcements appear in all briefings sent after they are added. Cleared automat
 When a safety rule changes mid-shift:
 
 ```
-/update New rule: all operators must wear gloves when handling D-F* units.
+/update New rule: all operators must wear gloves when handling D-Alpha units.
 ```
 
 What happens:
@@ -251,13 +251,13 @@ You only do this once.
 2. Scan the QR code posted at the door with your phone camera
 3. Telegram opens automatically — your personalised briefing appears within seconds
 
-Your briefing shows your station, today's 4 SOPs with targets, your UMI window, and any announcements from the supervisor.
+Your briefing shows your station, today's 4 SOPs with targets, your training slot window, and any announcements from the supervisor.
 
 ### 5.3 If you are called to cover
 
 You will receive a Telegram message from the bot if:
 - A colleague called in sick and you are the qualified replacement
-- A colleague started UMI and you are covering their station
+- A colleague started their training slot and you are covering their station
 
 The message will tell you the station, station type, and duration. Go to that station and begin. When the original operator returns, you will receive a release message.
 
@@ -284,10 +284,10 @@ When a safety update is issued, a new QR code will appear on the floor. Scan it 
 All events are written to `logs/audit.log` with UTC timestamps. The log is append-only and persists across restarts.
 
 ```
-[2026-04-12T06:15:00Z] SICK: Namyun absent. Ha**sh reallocated to A-7 (S-T**r).
-[2026-04-12T07:00:00Z] UMI_START: Ra**el on UMI. Namyun covering B-5 (S-R*).
-[2026-04-12T07:30:00Z] UMI_END: Ra**el returned to station B-5.
-[2026-04-12T08:00:00Z] SWAP approved: Ha**sh ↔ Ra**el.
+[2026-04-12T06:15:00Z] SICK: Namyun absent. Hamish reallocated to A-7 (S-Beta).
+[2026-04-12T07:00:00Z] TRN_START: Rafael on training slot. Namyun covering B-5 (S-Gamma).
+[2026-04-12T07:30:00Z] TRN_END: Rafael returned to station B-5.
+[2026-04-12T08:00:00Z] SWAP approved: Alonso ↔ Luca.
 ```
 
 Supervisors can share this log with team leads or compliance reviewers as needed.
@@ -301,6 +301,6 @@ Supervisors can share this log with team leads or compliance reviewers as needed
 - [ ] Supervisor has tested the shift startup sequence with a sample CSV
 - [ ] Supervisor has generated and scanned a test `/entry_qr` to confirm briefing delivery
 - [ ] At least one operator has completed the check-in flow end-to-end
-- [ ] `/sick` and `/umi_start` tested with standby operator in pilot run
+- [ ] `/sick` and `/trn_start` tested with standby operator in pilot run
 - [ ] Audit log reviewed after pilot run to confirm event recording
 - [ ] Supervisor knows how to restart the bot if it stops

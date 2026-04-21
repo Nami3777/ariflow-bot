@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-OperatorStatus = Literal["active", "sick", "umi", "unassigned"]
+OperatorStatus = Literal["active", "sick", "trn", "unassigned"]
 
 
 @dataclass
@@ -10,9 +10,9 @@ class Operator:
     station_type: str
     shift_start: str
     shift_end: str
-    umi_start: str
-    umi_end: str
-    umi_sop: str        # plain number, e.g. "6"
+    trn_start: str
+    trn_end: str
+    trn_sop: str        # plain number, e.g. "6"
     sop1: str           # "SOP#00033(90)"
     sop2: str
     sop3: str
@@ -48,7 +48,7 @@ class ShiftState:
         self.ack_version: int = 0
         self.pending_acks: set[str] = set()
         self.announcements: list[str] = []
-        self.umi_covers: dict[str, str] = {}  # operator_name → cover_name
+        self.trn_covers: dict[str, str] = {}  # operator_name → cover_name
 
     def get_unassigned(self) -> list[str]:
         return [

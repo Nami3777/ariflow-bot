@@ -19,13 +19,13 @@ def _build_dashboard() -> str:
 
     active    = [n for n, op in state.operators.items() if op.status == "active"]
     sick      = [n for n, op in state.operators.items() if op.status == "sick"]
-    on_umi    = [n for n, op in state.operators.items() if op.status == "umi"]
+    on_trn    = [n for n, op in state.operators.items() if op.status == "trn"]
     standby   = [n for n, op in state.operators.items() if op.status == "unassigned"]
     gaps      = [r for r in state.sick_reallocations if r.replacement == "UNCOVERED"]
 
     lines = [
         f"Shift: {state.shift_date}",
-        f"Operators: {len(active)} active | {len(standby)} standby | {len(sick)} sick | {len(on_umi)} on U*I",
+        f"Operators: {len(active)} active | {len(standby)} standby | {len(sick)} sick | {len(on_trn)} on training slot",
         "",
     ]
 
@@ -35,10 +35,10 @@ def _build_dashboard() -> str:
         else:
             lines.append(f"SICK:  {r.absent} -> {r.replacement} ({r.station}, {r.station_type})")
 
-    for name in on_umi:
+    for name in on_trn:
         op = state.operators[name]
-        cover = state.umi_covers.get(name, "no cover assigned")
-        lines.append(f"U*I:   {name} -> {cover} ({op.station}, {op.station_type})")
+        cover = state.trn_covers.get(name, "no cover assigned")
+        lines.append(f"TRN:   {name} -> {cover} ({op.station}, {op.station_type})")
 
     lines.append(f"GAPS:  {len(gaps)} uncovered" if gaps else "GAPS:  none")
     lines.append("")

@@ -1,17 +1,19 @@
 # Ariflow Bot — Agile Workflow Optimization
 
-A Telegram bot that manages robotics factory shift operations: operator check-in with personalised briefings, sick-leave reallocation, safety rules acknowledgment, U*I break coordination, and ad-hoc announcements.
+A Telegram bot that manages robotics factory shift operations: operator check-in with personalised briefings, sick-leave reallocation, safety rules acknowledgment, training slot coordination, and ad-hoc announcements.
 
-Built as a portfolio project demonstrating agent-based workflow automation and GRC skills — specifically role-based access control, capability-gated reallocation, change approval workflows, safety acknowledgment tracking, and a full audit trail — modeled on operational patterns in a physical AI / robotics environment (one of the leading robotics companies in Europe).
+Built as a portfolio project demonstrating agent-based workflow automation and GRC skills — specifically role-based access control, capability-gated reallocation, change approval workflows, safety acknowledgment tracking, and a full audit trail — modeled on operational patterns in a physical AI / robotics environment.
+
+> **Privacy note**: Operator names and station identifiers in the sample data (`data/`) are fully anonymised — fictional names and generic codes are used in place of real individuals or proprietary terminology. The operational logic reflects genuine patterns from a robotics assembly environment.
 
 ---
 
 ## What Problem This Solves
 
-In a robotics testing facility, every shift involves:
+In a robotics assembly facility, every shift involves:
 - 30–40 operators assigned across 18+ stations, each requiring different robot training
 - 4 SOPs per operator per shift (2h each), with individual daily targets
-- Staggered U*I breaks that temporarily vacate stations
+- Staggered training slots that temporarily vacate stations
 - Sick-leave events needing immediate capability-matched reallocation
 - Safety rule updates that must be formally acknowledged before work begins
 - A supervisor managing all of this manually via group chats, whiteboards, and spreadsheets
@@ -32,7 +34,7 @@ Orchestrator  — validates input, guards schedule state, routes to agents
 │ Agent 2: Daily Briefing    — check-in QR + personalised briefs │
 │ Agent 3: Sick Leave        — capability-matched reallocation   │
 │ Agent 4: Rules Ack         — QR code + acknowledgment tracking │
-│ Agent 5: Shift Coordinator — U*I breaks + station swaps       │
+│ Agent 5: Shift Coordinator — training slots + station swaps   │
 └───────────────────────────────────────────────────────────────┘
         ↓
 state.py  — in-memory shift state (resets on new CSV upload)
@@ -57,8 +59,8 @@ state.py  — in-memory shift state (resets on new CSV upload)
 |---|---|
 | `/dashboard` | Live shift overview — auto-refreshes every 30s |
 | `/sick [name]` | Marks operator absent, finds compatible replacement, notifies them |
-| `/u*i_start [name]` | Operator starts U*I break; finds temporary cover |
-| `/u*i_end [name]` | Operator returns; releases cover back to standby |
+| `/trn_start [name]` | Operator starts training slot; finds temporary cover |
+| `/trn_end [name]` | Operator returns; releases cover back to standby |
 | `/swap [name1] [name2]` | Requests a station swap |
 | `/approve_swap [id]` | Approves a pending swap |
 
@@ -89,7 +91,7 @@ Operator arrives → scans QR with phone → Telegram opens
         ↓
 Bot identifies operator by Telegram chat ID
         ↓
-Operator receives personalised briefing (station, SOPs, U*I, announcements)
+Operator receives personalised briefing (station, SOPs, training slot, announcements)
 ```
 
 Unassigned (standby) operators also receive a message confirming they are on standby for the shift.
@@ -103,7 +105,7 @@ Each operator receives this on check-in:
 ```
 ✅ Checked in — Good afternoon, Namyun!
 
-📍 Station A-7 — S-T**r
+📍 Station A-7 — S-Beta
 ⏰ Shift: 14:30 – 23:00
 
 📋 Tasks today (2h each):
@@ -112,14 +114,14 @@ Each operator receives this on check-in:
   18:30–20:30   SOP#00001   Target: 110
   20:30–22:30   SOP#00020   Target: 80
 
-⏱ U*I: 17:30–18:30   SOP#00006
+⏱ Training Slot: 17:30–18:30   SOP#00006
 
 📢 Announcements:
   • Demo at 3:00 PM — visitors on floor, maintain station cleanliness
 ```
 
 - **Tasks**: 4 SOPs assigned for the day, each lasting 2 hours, with the target count
-- **U*I**: The operator manages when within their shift to take the U*I break
+- **Training Slot**: A scheduled break for robot handling practice; the operator leaves their station temporarily
 - **Announcements**: Only shown if the supervisor has added any via `/announce`
 
 ---
@@ -142,21 +144,21 @@ Announcements accumulate during the shift and appear in every briefing sent afte
 
 ## Schedule CSV (`data/sample_schedule.csv`)
 
-The schedule CSV is uploaded by the supervisor at the start of each shift. It is the single source of truth for all operator assignments, SOPs, and U*I times.
+The schedule CSV is uploaded by the supervisor at the start of each shift. It is the single source of truth for all operator assignments, SOPs, and training slot times.
 
 ### Required Columns
 
 | Column | Description | Example |
 |---|---|---|
 | `shift_date` | Date of the shift | `2026-04-12` |
-| `operator_name` | Full name (must match `operators.json`) | `Namyun`, `Am*az As*an` |
+| `operator_name` | Full name (must match `operators.json`) | `Namyun`, `Emir Aslan` |
 | `station` | Station ID | `A-7`, `B-5`, `DF C-1` |
-| `station_type` | Robot model at that station | `S-T**r`, `D-F*` |
+| `station_type` | Robot model at that station | `S-Beta`, `D-Alpha` |
 | `shift_start` | Shift start time HH:MM | `14:30` |
 | `shift_end` | Shift end time HH:MM | `23:00` |
-| `umi_start` | U*I break start HH:MM | `17:30` |
-| `umi_end` | U*I break end HH:MM | `18:30` |
-| `umi_sop` | U*I SOP number (plain integer from U*I Shift Plan) | `6` |
+| `trn_start` | Training slot start HH:MM | `17:30` |
+| `trn_end` | Training slot end HH:MM | `18:30` |
+| `trn_sop` | Training slot SOP number (plain integer) | `6` |
 | `sop1` | Task 1 SOP with target | `SOP#00033(90)` |
 | `sop2` | Task 2 SOP with target | `SOP#00016(160)` |
 | `sop3` | Task 3 SOP with target | `SOP#00001(110)` |
@@ -177,16 +179,16 @@ Target counts reflect task complexity:
 - `80–130` — moderate complexity
 - `< 80` — complex or precision task
 
-### U*I SOP
+### Training Slot SOP
 
-The U*I SOP comes from the separate **U*I Shift Plan** document (posted on the wall). It is a plain integer (e.g. `6`), which maps to `SOP#00006` in the briefing. It changes week to week per the U*I rotation schedule.
+The training slot SOP is a plain integer (e.g. `6`), which maps to `SOP#00006` in the briefing. It rotates weekly per the training schedule posted on the floor.
 
 ### Unassigned Operators
 
-Operators with `status = unassigned` are on standby. Leave `station`, `umi_start`, `umi_end`, `umi_sop`, and all `sop*` columns empty.
+Operators with `status = unassigned` are on standby. Leave `station`, `trn_start`, `trn_end`, `trn_sop`, and all `sop*` columns empty.
 
 ```csv
-2026-04-12,Ha**sh,,,14:30,23:00,,,,,,,,unassigned
+2026-04-12,Hamish,,,14:30,23:00,,,,,,,,unassigned
 ```
 
 They still receive a check-in message confirming standby status and shift hours.
@@ -195,14 +197,14 @@ They still receive a check-in message confirming standby status and shift hours.
 
 | Code | Description |
 |---|---|
-| `S-F*` | Single-arm F* robot |
-| `S-T**r` | Single-arm T**r robot |
-| `D-T**r` | Dual-arm T**r robot |
-| `D-F*` | Dual-arm F* robot |
-| `S-R*` | Single-arm R* robot |
-| `S-Y*5` | Single-arm Y*5 robot |
+| `S-Alpha` | Single-arm Alpha robot |
+| `S-Beta` | Single-arm Beta robot |
+| `D-Beta` | Dual-arm Beta robot |
+| `D-Alpha` | Dual-arm Alpha robot |
+| `S-Gamma` | Single-arm Gamma robot |
+| `S-Delta` | Single-arm Delta robot |
 
-### Two Shifts (Tuesday Mar 31, 2026 example)
+### Two Shifts (example)
 
 | Shift | Time | Stations |
 |---|---|---|
@@ -215,12 +217,12 @@ Both shifts can be in the same CSV file — the bot loads all rows together.
 
 ## Capability Matrix (`data/capabilities.json`)
 
-Maps each operator to the station types they are trained for. Used by sick-leave reallocation (Agent 3) and U*I cover (Agent 5) to find compatible replacements from the standby pool.
+Maps each operator to the station types they are trained for. Used by sick-leave reallocation (Agent 3) and training slot cover (Agent 5) to find compatible replacements from the standby pool.
 
 ```json
 {
-  "Namyun": ["S-T**r", "S-F*"],
-  "Ha**sh": ["D-F*", "S-R*", "S-T**r"]
+  "Namyun": ["S-Beta", "S-Alpha"],
+  "Hamish": ["D-Alpha", "S-Gamma", "S-Beta"]
 }
 ```
 
@@ -235,12 +237,12 @@ Update this file whenever operator qualifications change.
 Maps operator names to their Telegram chat IDs. Required for:
 - Check-in identification (QR scan → chat ID → name lookup)
 - Sending reallocation notifications
-- Sending U*I cover requests
+- Sending training slot cover requests
 
 ```json
 {
   "Namyun": 0,
-  "Ra**el": 0
+  "Rafael": 0
 }
 ```
 
@@ -279,10 +281,10 @@ When scanned: Telegram opens → bot records operator name + timestamp → super
 Every significant event is written to `logs/audit.log` with a UTC timestamp:
 
 ```
-[2026-04-12T06:15:00Z] SICK: Ta**ra absent. Pe*er reallocated to B-2 (D-FH).
-[2026-04-12T07:00:00Z] U*I_START: Se******no on U*I. Ch******el covering B-5 (S-R*).
-[2026-04-12T07:30:00Z] U*I_END: Se******no returned to station B-5.
-[2026-04-12T08:00:00Z] SWAP approved: Al*ns ↔ L**n.
+[2026-04-12T06:15:00Z] SICK: Tamara absent. Pierre reallocated to B-2 (D-Alpha).
+[2026-04-12T07:00:00Z] TRN_START: Serena on training slot. Camille covering B-5 (S-Gamma).
+[2026-04-12T07:30:00Z] TRN_END: Serena returned to station B-5.
+[2026-04-12T08:00:00Z] SWAP approved: Alonso ↔ Luca.
 ```
 
 The log is append-only and does not reset between bot restarts — it persists across shifts.
@@ -305,7 +307,7 @@ agile-workflow/
 │   ├── daily_briefing.py    # Agent 2: entry QR + check-in + announcements
 │   ├── sick_leave.py        # Agent 3: /sick + capability-matched reallocation
 │   ├── rules_ack.py         # Agent 4: /update + QR + ack tracking
-│   └── shift_coordinator.py # Agent 5: /umi_start /umi_end /swap
+│   └── shift_coordinator.py # Agent 5: /trn_start /trn_end /swap
 ├── data/
 │   ├── sample_schedule.csv  # Full shift schedule (morning + afternoon, anonymised)
 │   ├── capabilities.json    # Operator → qualified station types
@@ -333,7 +335,7 @@ Stop with `Ctrl+C`.
 3. `/announce [text]` — add any announcements for the shift (optional)
 4. `/entry_qr` — generate the entrance QR and post it at the door
 5. Operators arrive and scan → briefings sent automatically
-6. During shift: use `/sick`, `/umi_start`, `/umi_end`, `/swap` as needed
+6. During shift: use `/sick`, `/trn_start`, `/trn_end`, `/swap` as needed
 7. `/update [text]` for any safety rule changes → display QR for acknowledgment
 
 ### First-time setup checklist

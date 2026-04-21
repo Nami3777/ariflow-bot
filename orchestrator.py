@@ -22,8 +22,8 @@ from agents.daily_briefing import (
 from agents.sick_leave import handle_sick
 from agents.rules_ack import handle_update, handle_ack_deeplink, handle_ack_status
 from agents.shift_coordinator import (
-    handle_umi_start,
-    handle_umi_end,
+    handle_trn_start,
+    handle_trn_end,
     handle_swap,
     handle_approve_swap,
     handle_cancel_swap,
@@ -42,8 +42,8 @@ HELP_TEXT = (
     "/dashboard — live shift dashboard (auto-refreshes every 30s)\n"
     "/preview [name] — see exactly what that operator's briefing looks like\n"
     "/sick [name] — mark operator sick and reallocate\n"
-    "/umi_start [name] — operator starting U*I break\n"
-    "/umi_end [name] — operator returned from U*I\n"
+    "/trn_start [name] — operator starting training slot\n"
+    "/trn_end [name] — operator returned from training slot\n"
     "/swap [name1] [name2] — request station swap\n"
     "/approve_swap [id] — approve a pending swap\n"
     "/cancel_swap [id] — cancel a pending swap\n"
@@ -123,8 +123,8 @@ def build_application(token: str) -> Application:
     app.add_handler(CommandHandler("preview",              _supervisor_schedule(handle_preview)))
     app.add_handler(CommandHandler("dashboard",            _supervisor_schedule(handle_dashboard)))
     app.add_handler(CommandHandler("sick",                 _supervisor_schedule(handle_sick)))
-    app.add_handler(CommandHandler("umi_start",            _supervisor_schedule(handle_umi_start)))
-    app.add_handler(CommandHandler("umi_end",              _supervisor_schedule(handle_umi_end)))
+    app.add_handler(CommandHandler("trn_start",            _supervisor_schedule(handle_trn_start)))
+    app.add_handler(CommandHandler("trn_end",              _supervisor_schedule(handle_trn_end)))
     app.add_handler(CommandHandler("approve_swap",         _supervisor_schedule(handle_approve_swap)))
     app.add_handler(CommandHandler("cancel_swap",          _supervisor_schedule(handle_cancel_swap)))
     app.add_handler(CommandHandler("update",               _supervisor_schedule(handle_update)))

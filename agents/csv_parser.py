@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 REQUIRED_COLUMNS = {
     "operator_name", "station_type", "shift_start", "shift_end",
-    "umi_start", "umi_end", "umi_sop", "sop1", "sop2", "sop3", "sop4", "status"
+    "trn_start", "trn_end", "trn_sop", "sop1", "sop2", "sop3", "sop4", "status"
 }
 
 
@@ -46,9 +46,9 @@ async def handle_csv_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
             station_type=row["station_type"].strip(),
             shift_start=row["shift_start"].strip(),
             shift_end=row["shift_end"].strip(),
-            umi_start=row["umi_start"].strip(),
-            umi_end=row["umi_end"].strip(),
-            umi_sop=row["umi_sop"].strip() if not is_unassigned else "",
+            trn_start=row["trn_start"].strip(),
+            trn_end=row["trn_end"].strip(),
+            trn_sop=row["trn_sop"].strip() if not is_unassigned else "",
             sop1=row["sop1"].strip() if not is_unassigned else "",
             sop2=row["sop2"].strip() if not is_unassigned else "",
             sop3=row["sop3"].strip() if not is_unassigned else "",
