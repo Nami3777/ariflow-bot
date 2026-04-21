@@ -30,10 +30,10 @@ Telegram Bot (ariflow_bot)
 Orchestrator  — validates input, guards schedule state, routes to agents
         ↓
 ┌───────────────────────────────────────────────────────────────┐
-│ Agent 1: CSV Parser        — loads the shift schedule          │
-│ Agent 2: Daily Briefing    — check-in QR + personalised briefs │
-│ Agent 3: Sick Leave        — capability-matched reallocation   │
-│ Agent 4: Rules Ack         — QR code + acknowledgment tracking │
+│ Agent 1: CSV Parser        — loads the shift schedule         │
+│ Agent 2: Daily Briefing    — check-in QR + personalised briefs│
+│ Agent 3: Sick Leave        — capability-matched reallocation  │
+│ Agent 4: Rules Ack         — QR code + acknowledgment tracking│
 │ Agent 5: Shift Coordinator — training slots + station swaps   │
 └───────────────────────────────────────────────────────────────┘
         ↓
