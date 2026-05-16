@@ -1,4 +1,4 @@
-# Ariflow Bot — Agile Workflow Optimization
+# AriBot — Agile Robotics Workflow Bot
 
 A Telegram bot that manages robotics factory shift operations: operator check-in with personalised briefings, sick-leave reallocation, safety rules acknowledgment, training slot coordination, and ad-hoc announcements.
 
@@ -8,24 +8,94 @@ Built as a portfolio project demonstrating agent-based workflow automation and G
 
 ---
 
-## What Problem This Solves
+## Project Context
 
-In a robotics assembly facility, every shift involves:
-- 30–40 operators assigned across 18+ stations, each requiring different robot training
-- 4 SOPs per operator per shift (2h each), with individual daily targets
-- Staggered training slots that temporarily vacate stations
-- Sick-leave events needing immediate capability-matched reallocation
-- Safety rule updates that must be formally acknowledged before work begins
-- A supervisor managing all of this manually via group chats, whiteboards, and spreadsheets
+| Item | Details |
+|---|---|
+| Role | Solo product builder, workflow analyst, and Python implementation lead |
+| Domain | Robotics assembly / technical operations coordination |
+| Users | Shift supervisors, operators, training coordinators, safety leads |
+| Timeline | Short independent build based on observed robotics workflow patterns |
+| Scope | Workflow mapping, Telegram bot, multi-agent orchestration, shift check-in, sick-leave reallocation, training-slot cover, safety acknowledgment, audit log |
+| Tools | Python, python-telegram-bot, qrcode, dotenv, CSV/JSON state, append-only audit log |
+| Constraint | Fast-moving factory environment, phone-first operator access, capability-matched assignments, safety acknowledgment requirements, no formal production deployment |
+| Outcome | Working portfolio prototype demonstrating structured shift coordination and audit-ready workflow automation |
+| Status | Built as a portfolio prototype using anonymized sample data |
 
-This bot replaces that manual coordination with a structured check-in flow, automatic SOPs briefing, capability-based reallocation, QR-code acknowledgment, and a full audit trail.
+---
+
+## Problem
+
+Robotics assembly shifts create coordination pressure because station assignments, SOP targets, training slots, sick-leave coverage, and safety updates change during the shift. Supervisors often manage this through group chats, whiteboards, and spreadsheets, which creates missed handoffs, unclear accountability, and weak auditability.
+
+The product goal was to convert ad-hoc shift coordination into a structured, phone-first workflow that operators could use without learning a new enterprise system.
+
+---
+
+## Product Decisions
+
+### 1. Telegram bot vs. web dashboard
+
+I considered building a web dashboard first. The constraint was that operators on a production floor are more likely to use a phone-based flow than log into a new system. I chose Telegram because QR deep links made check-in and safety acknowledgment faster and easier to adopt.
+
+### 2. Manual supervisor assignment vs. capability-matched reallocation
+
+I considered leaving sick-leave replacement as a manual supervisor decision. The constraint was that not every operator is qualified for every station type. I built a capability matrix so the bot could recommend replacements based on station eligibility instead of simple availability.
+
+### 3. Single workflow script vs. agent-based modules
+
+I considered building one procedural bot script. I chose agent-style modules because the workflows had different responsibilities: CSV parsing, daily briefings, sick leave, safety acknowledgment, and shift coordination. This made the system easier to reason about and easier to extend.
+
+### 4. Group-chat announcements vs. personalized briefings
+
+I considered sending all shift information through group announcements. The constraint was that each operator has a different station, SOP list, target, and training slot. I designed personalized check-in briefings so each operator receives only the information needed for their shift.
+
+### 5. Informal safety update vs. auditable acknowledgment
+
+I considered treating safety updates as normal announcements. I rejected that because safety communication needs proof of acknowledgment. I added QR-based rule acknowledgment and an audit log so supervisors can see who has and has not confirmed the latest rule version.
+
+---
+
+## Constraints
+
+- Operators need a low-friction phone-first workflow.
+- Supervisors need to handle sick leave and training-slot coverage quickly.
+- Reallocation must respect station capability, not just availability.
+- Safety updates require acknowledgment tracking.
+- Sample data must be anonymized and must not expose proprietary station or operator details.
+- The project is a portfolio prototype, not a live production deployment.
+
+---
+
+## Results
+
+| Area | Result |
+|---|---|
+| Check-in | QR-based operator check-in with personalized briefing |
+| Reallocation | Capability-matched sick-leave and training-slot cover logic |
+| Safety | QR-based safety-rule acknowledgment and `/ack_status` view |
+| Auditability | Append-only event log for sick leave, training cover, swaps, and acknowledgments |
+| Data privacy | Anonymized sample schedule, capabilities, and operator registry |
+| Status | Working portfolio prototype; not a production deployment |
+
+---
+
+## Requirements and Acceptance Criteria
+
+| User Need | Feature | Acceptance Criteria |
+|---|---|---|
+| Supervisor needs to replace absent operator | `/sick [name]` | Bot selects standby operator with matching station capability and logs the event |
+| Operator needs shift info quickly | QR check-in briefing | Operator receives station, SOPs, targets, training slot, and announcements on scan |
+| Safety lead needs proof of acknowledgment | `/update` + QR + `/ack_status` | Each acknowledgment records operator, timestamp, and rule version |
+| Supervisor needs live shift overview | `/dashboard` | Shows current station assignments, standby pool, and pending swaps; auto-refreshes every 30s |
+| Supervisor needs to cover a training slot | `/trn_start [name]` | Bot identifies compatible standby operator and logs the temporary reallocation |
 
 ---
 
 ## Architecture
 
 ```
-Telegram Bot (ariflow_bot)
+Telegram Bot (AriBot)
         ↓
 Orchestrator  — validates input, guards schedule state, routes to agents
         ↓
@@ -321,7 +391,7 @@ agile-workflow/
 ## Running the Bot
 
 ```bash
-cd path/to/ariflow-bot
+cd path/to/agile-workflow
 pip install -r requirements.txt
 python main.py
 ```
