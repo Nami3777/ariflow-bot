@@ -6,6 +6,8 @@ Built as a portfolio project demonstrating agent-based workflow automation and G
 
 > **Privacy note**: Operator names and station identifiers in the sample data (`data/`) are fully anonymised — fictional names and generic codes are used in place of real individuals or proprietary terminology. The operational logic reflects genuine patterns from a robotics assembly environment.
 
+![AriBot shift coordination demo](assets/screenshot.png)
+
 ---
 
 ## Project Context
