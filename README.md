@@ -1,4 +1,4 @@
-# AriBot — Agile Robotics Workflow Bot
+# AriBot — Robotics Teleoperation Workflow Bot
 
 A Telegram bot that manages robotics factory shift operations: operator check-in with personalised briefings, sick-leave reallocation, safety rules acknowledgment, training slot coordination, and ad-hoc announcements.
 
